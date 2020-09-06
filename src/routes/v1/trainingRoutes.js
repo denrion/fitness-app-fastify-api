@@ -8,10 +8,19 @@ const trainingRouter = (fastify, opts, done) => {
 
   const getAllTrainingsOpts = {
     ...restrictRouteTo(fastify, Role.ADMIN, Role.USER),
-    async preValidation(request, reply) {
+    async preValidation(request, reply, done) {
       const { id, role } = request.user;
 
       if (Role.USER === role) request.query.user = id;
+    },
+  };
+
+  const getTrainingByIdOpts = {
+    ...restrictRouteTo(fastify, Role.ADMIN, Role.USER),
+    async preValidation(request, reply, done) {
+      const { id, role } = request.user;
+
+      if (Role.USER === role) request.findOneFilter = { user: id };
     },
   };
 
@@ -21,11 +30,8 @@ const trainingRouter = (fastify, opts, done) => {
     restrictRouteTo(fastify, Role.ADMIN),
     trainingController.createTraining
   );
-  fastify.get(
-    '/:id',
-    restrictRouteTo(fastify, Role.ADMIN),
-    trainingController.getTrainingById
-  );
+
+  fastify.get('/:id', getTrainingByIdOpts, trainingController.getTrainingById);
   fastify.put(
     '/:id',
     restrictRouteTo(fastify, Role.ADMIN),
