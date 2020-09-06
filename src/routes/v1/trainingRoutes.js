@@ -1,18 +1,41 @@
-const trainingController = require('../../controllers/trainingController');
 const Role = require('../../constants/Role');
+const trainingController = require('../../controllers/trainingController');
+const restrictRouteTo = require('../../utils/fastify/restrictRouteTo');
 
 const trainingRouter = (fastify, opts, done) => {
   // Create new scope for routes that need to go through isAuth & restrictTo check
-  fastify.addHook('onRequest', async (request, reply) => {
-    await fastify.isAuth(request, reply);
-    await fastify.restrictTo(request, reply, Role.ADMIN);
-  });
+  fastify.addHook('onRequest', fastify.isAuth);
 
-  fastify.get('/', trainingController.getAllTrainings);
-  fastify.post('/', trainingController.createTraining);
-  fastify.get('/:id', trainingController.getTrainingById);
-  fastify.put('/:id', trainingController.updateTraining);
-  fastify.delete('/:id', trainingController.deleteTraining);
+  const getAllTrainingsOpts = {
+    ...restrictRouteTo(fastify, Role.ADMIN, Role.USER),
+    async preValidation(request, reply) {
+      const { id, role } = request.user;
+
+      if (Role.USER === role) request.query.user = id;
+    },
+  };
+
+  fastify.get('/', getAllTrainingsOpts, trainingController.getAllTrainings);
+  fastify.post(
+    '/',
+    restrictRouteTo(fastify, Role.ADMIN),
+    trainingController.createTraining
+  );
+  fastify.get(
+    '/:id',
+    restrictRouteTo(fastify, Role.ADMIN),
+    trainingController.getTrainingById
+  );
+  fastify.put(
+    '/:id',
+    restrictRouteTo(fastify, Role.ADMIN),
+    trainingController.updateTraining
+  );
+  fastify.delete(
+    '/:id',
+    restrictRouteTo(fastify, Role.ADMIN),
+    trainingController.deleteTraining
+  );
 
   done();
 };
