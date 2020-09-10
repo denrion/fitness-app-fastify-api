@@ -7,7 +7,9 @@ const User = require('../models/User/user.model');
 require('./loadEnvironmentVariables')();
 require('./connectMongoDB')();
 
-const users = JSON.parse(fs.readFileSync(path.resolve('__dev-data__', 'users.json'), 'utf-8'));
+const users = JSON.parse(
+  fs.readFileSync(path.resolve('__dev-data__', 'users.json'), 'utf-8')
+);
 
 // IMPORT DATA INTO DB
 const importData = async () => {
